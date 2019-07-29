@@ -1,31 +1,35 @@
 {
-  "name": "telegram-bot",
+  "name": "movie-geek-bot",
   "version": "1.0.0",
   "description": "",
-  "main": "/app/bot.js",
+  "main": "app.js",
   "scripts": {
+    "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Morgot96/telegram-bot.git"
+    "url": "git+https://github.com/maryan-mandzyuk/movie-geek-bot.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Morgot96/telegram-bot/issues"
+    "url": "https://github.com/maryan-mandzyuk/movie-geek-bot/issues"
   },
-  "homepage": "https://github.com/Morgot96/telegram-bot#readme",
+  "homepage": "https://github.com/maryan-mandzyuk/movie-geek-bot#readme",
   "dependencies": {
-    "axios": "^0.19.0",
-    "cheerio": "^1.0.0-rc.3",
+    "babel-eslint": "^10.0.2",
+    "dotenv": "^8.0.0",
     "esm": "^3.2.25",
-    "mongoose": "^5.6.4",
-    "mongoose-auto-increment": "^5.0.1",
+    "node-fetch": "^2.6.0",
+    "request": "^2.88.0",
     "telegraf": "^3.30.1"
   },
   "devDependencies": {
     "babel-preset-env": "^1.7.0",
-    "babel-register": "^6.26.0"
+    "babel-register": "^6.26.0",
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.2.0",
+    "eslint-plugin-import": "^2.18.2"
   }
 }
