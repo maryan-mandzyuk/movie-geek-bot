@@ -25,6 +25,7 @@ module.exports = {
     "no-restricted-syntax": ["error", "FunctionExpression", "WithStatement", "BinaryExpression[operator='in']"],
     "parser": "babel-eslint",
     "prefer-destructuring": ["error", {"object": false, "array": false}],
+    "no-await-in-loop": 0,
   }
 };
 

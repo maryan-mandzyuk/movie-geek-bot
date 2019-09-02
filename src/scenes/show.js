@@ -2,7 +2,9 @@ const WizardScene = require('telegraf/scenes/wizard');
 const Markup = require('telegraf/markup');
 const Show = require('../functions/show');
 
-const scene = new WizardScene('ShowScene',
+let shows;
+
+const mainScene = new WizardScene('ShowScene',
 	((ctx) => {
 		ctx.reply('Serials menu', Markup.keyboard([
 			['▶️ Now on TV'],
@@ -23,22 +25,65 @@ const scene = new WizardScene('ShowScene',
 			ctx.scene.leave();
 			return ctx.scene.enter('mainScene');
 		}
-		const shows = await Show.getShows(url);
-		Show.postShows(shows, ctx);
-		ctx.reply('Shows:', Markup.keyboard([
+		shows = await Show.getShows(url);
+		ctx.scene.leave();
+		return ctx.scene.enter('loadShowScene');
+	}));
+
+const loadScene = new WizardScene('loadShowScene',
+	(async (ctx) => {
+		await ctx.reply('Shows', Markup.keyboard([
+			['⬇️ Load more'],
 			['⬅️ Back', '📋 To main menu'],
 		]).resize()
 			.extra());
+		const showsToPost = shows.slice(0, 3);
+		await Show.postShows(showsToPost, ctx);
+		shows = shows.slice(3);
 		return ctx.wizard.next();
 	}),
 	((ctx) => {
-		if (ctx.message.text === '⬅️ Back') {
+		if (typeof (ctx.callbackQuery.data) !== 'undefined') {
+			ctx.scene.leave();
+			return ctx.scene.enter('viewShowDetailScene');
+		}
+		if (ctx.message.text === '⬇️ Load more') {
+			ctx.scene.leave();
+			if (shows.length === 0) {
+				ctx.reply('No more shows!');
+				ctx.scene.leave();
+				return ctx.scene.enter('ShowScene');
+			}
 			return ctx.scene.reenter();
+		} if (ctx.message.text === '⬅️ Back') {
+			ctx.scene.leave();
+			return ctx.scene.enter('ShowScene');
 		}
 		ctx.scene.leave();
 		return ctx.scene.enter('mainScene');
 	}));
 
+const viewDetailScene = new WizardScene('viewShowDetailScene',
+	(async (ctx) => {
+		await ctx.reply('Details:', Markup.keyboard([
+			['⬅️ Back']
+		]).resize()
+			.extra());
+		const callbackData = ctx.callbackQuery.data.split('|');
+		const TMDBUrl = `https://api.themoviedb.org/3/tv/${callbackData[0]}?api_key=${process.env.API_Moviedb}&language=uk`;
+		const OMDBUrl = `http://www.omdbapi.com/?apikey=${process.env.OMDB_API}&t=${callbackData[1]}&type=series`;
+		const OMDBFilmDetails = await Show.getDetail(OMDBUrl);
+		const TMDBFilmDetails = await Show.getDetail(TMDBUrl);
+		Show.postDetail(TMDBFilmDetails, OMDBFilmDetails, ctx);
+		return ctx.wizard.next();
+	}),
+	(ctx) => {
+		ctx.scene.leave();
+		return ctx.scene.enter('ShowScene');
+	});
+
 module.exports = Object.freeze({
-	scene
+	mainScene,
+	loadScene,
+	viewDetailScene
 });

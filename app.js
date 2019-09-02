@@ -7,7 +7,8 @@ require('dotenv').config();
 
 // express server for heroku
 const app = express();
-app.listen(process.env.PORT, () => console.log(`Server started on port  ${process.env.PORT} `));
+const port = process.env.PORT || 3000;
+app.listen(port, () => console.log(`Server started on port  ${port} `));
 
 // ----------BOT-------------------
 const bot = new Telegraf(process.env.TOKEN);
