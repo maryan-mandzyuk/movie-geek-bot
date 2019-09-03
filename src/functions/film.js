@@ -15,6 +15,15 @@ const getDetail = async (url) => {
 	return json;
 };
 
+const getYoutubeVideo = async (search, maxResults) => {
+	const searchString = search.replace('&', 'and');
+	let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${searchString}&maxResults=${maxResults}&key=${process.env.YOUTUBE_API}`;
+	url = encodeURI(url);
+	const response = await fetch(url);
+	const json = await response.json();
+	return json.items;
+};
+
 const postFilms = async (films, ctx) => {
 	const filmsToPost = films.reverse();
 	for (const film of filmsToPost) {
@@ -34,19 +43,24 @@ const postDetail = async (TMDBFilm, OMDBFilm, ctx) => {
 	const { runtime } = TMDBFilm;
 	const ratings = OMDBFilm.Ratings;
 	let ratingsString = '';
-
+	const filmTrailersEn = await getYoutubeVideo(`${originalTitle} trailer`, 1);
+	const filmTrailersUk = await getYoutubeVideo(`${title} трейлер українською`, 3);
+	const filmTrailers = filmTrailersUk.concat(filmTrailersEn);
+	const trailerList = filmTrailers.map((item) => {
+		const trailerTitle = item.snippet.title.replace('[HD]', '');
+		return 	`[${trailerTitle}](https://www.youtube.com/watch?v=${item.id.videoId})\n`;
+	});
+	const trailerListString = trailerList.join('\n');
 	ratings.forEach((element) => {
 		ratingsString += `${element.Source} ${element.Value} \n`;
 	});
 
 	ctx.reply(`*${title}* 
-		\nОригінальна назва: 
-		\n${originalTitle} 
-		\n${overview} 
-		\n*Жанр:* ${genres.join(' ')} 
+		\nОригінальна назва:\n${originalTitle} 
+		\n${overview}
+		\n*Трейлери фільму:*\n${trailerListString}\n*Жанр:* ${genres.join(', ')} 
 		\n*Тривалість:* ${runtime} хв. 
-		\n*Оцінки:* 
-		\n${ratingsString}`, { parse_mode: 'markdown' });
+		\n*Оцінки:*\n${ratingsString}`, { parse_mode: 'markdown' });
 };
 
 module.exports = Object.freeze({

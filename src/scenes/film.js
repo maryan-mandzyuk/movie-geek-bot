@@ -42,7 +42,7 @@ const loadScene = new WizardScene('loadFilmScene',
 		return ctx.wizard.next();
 	}),
 	((ctx) => {
-		if (typeof (ctx.callbackQuery.data) !== 'undefined') {
+		if (ctx.callbackQuery !== undefined) {
 			ctx.scene.leave();
 			return ctx.scene.enter('viewFilmDetailScene');
 		}
