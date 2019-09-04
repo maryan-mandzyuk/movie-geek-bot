@@ -1,6 +1,6 @@
 const WizardScene = require('telegraf/scenes/wizard');
 const Markup = require('telegraf/markup');
-const Article = require('../functions/article');
+const Article = require('../News/functions');
 
 
 const scene = new WizardScene('mainScene',

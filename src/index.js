@@ -1,6 +1,6 @@
-const Main = require('./scenes/main');
-const Show = require('./scenes/show');
-const Film = require('./scenes/film');
+const Main = require('./Main/scenes');
+const Show = require('./Shows/scenes');
+const Film = require('./Films/scenes');
 
 
 const start = (stage) => {

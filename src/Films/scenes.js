@@ -1,6 +1,6 @@
 const WizardScene = require('telegraf/scenes/wizard');
 const Markup = require('telegraf/markup');
-const Film = require('../functions/film');
+const Film = require('../Films/functions');
 
 let films;
 

@@ -46,11 +46,10 @@ const postDetail = async (TMDBShow, OMDBShow, ctx) => {
 	const runtime = OMDBShow.Runtime;
 	let ratingsString = '';
 	let nextEpisodeString = '';
-	// to refactor
-	const filmTrailersEn = await getYoutubeVideo(`${originalTitle} trailer`, 1);
-	const filmTrailersUk = await getYoutubeVideo(`${name} трейлер українською`, 3);
-	const filmTrailers = filmTrailersUk.concat(filmTrailersEn);
-	const trailerList = filmTrailers.map((item) => {
+	const showTrailersEn = await getYoutubeVideo(`${originalTitle} trailer`, 1);
+	const showTrailersUk = await getYoutubeVideo(`${name} трейлер українською`, 3);
+	const showTrailers = showTrailersUk.concat(showTrailersEn);
+	const trailerList = showTrailers.map((item) => {
 		const trailerTitle = item.snippet.title.replace('[HD]', '');
 		return 	`[${trailerTitle}](https://www.youtube.com/watch?v=${item.id.videoId})\n`;
 	});
