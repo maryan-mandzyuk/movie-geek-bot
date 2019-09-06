@@ -1,6 +1,4 @@
-/* eslint-disable no-await-in-loop */
 const fetch = require('node-fetch');
-
 
 const getArticles = async () => {
 	let articles;

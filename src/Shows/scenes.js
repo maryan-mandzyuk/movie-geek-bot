@@ -1,45 +1,47 @@
 const WizardScene = require('telegraf/scenes/wizard');
-const Markup = require('telegraf/markup');
 const Show = require('../Shows/functions');
+const Functions = require('../util/functions');
+const Keyboard = require('../util/keyboards');
+
 
 let shows;
+let load = true;
 
-const mainScene = new WizardScene('ShowScene',
+const mainScene = new WizardScene('showScene',
 	((ctx) => {
-		ctx.reply('Serials menu', Markup.keyboard([
-			['▶️ Now on TV'],
-			['🔥 Trending today', '📈 Trending this week'],
-			['📋 Back to main menu']
-		]).extra());
+		Keyboard.showKeyboard(ctx);
+		load = true;
 		return ctx.wizard.next();
 	}),
 	(async (ctx) => {
 		let url;
-		if (ctx.message.text === '▶️ Now on TV') {
+		if (!ctx.message) {
+			ctx.scene.leave();
+			return ctx.scene.enter('viewShowDetailScene');
+		}
+		if (ctx.message.text === ctx.session.i.t('shows.now')) {
 			url = process.env.URL_TV_Now;
-		} else if (ctx.message.text === '🔥 Trending today') {
+		} else if (ctx.message.text === ctx.session.i.t('shows.trandingToday')) {
 			url = process.env.URL_Trending_TV_Day;
-		} else if (ctx.message.text === '📈 Trending this week') {
+		} else if (ctx.message.text === ctx.session.i.t('shows.trandingWeek')) {
 			url = process.env.URL_Trending_TV_Week;
-		} else if (ctx.message.text === '📋 Back to main menu') {
+		} else if (ctx.message.text === ctx.session.i.t('navigation.back')) {
 			ctx.scene.leave();
 			return ctx.scene.enter('mainScene');
 		}
-		shows = await Show.getShows(url);
+		shows = await Functions.getData(url);
 		ctx.scene.leave();
 		return ctx.scene.enter('loadShowScene');
 	}));
 
 const loadScene = new WizardScene('loadShowScene',
 	(async (ctx) => {
-		await ctx.reply('Shows', Markup.keyboard([
-			['⬇️ Load more'],
-			['⬅️ Back', '📋 To main menu'],
-		]).resize()
-			.extra());
-		const showsToPost = shows.slice(0, 3);
-		await Show.postShows(showsToPost, ctx);
-		shows = shows.slice(3);
+		await Keyboard.navigationKeyboard(ctx);
+		if (load) {
+			const showsToPost = shows.slice(0, 3);
+			await Show.postShows(showsToPost, ctx);
+			shows = shows.slice(3);
+		}
 		return ctx.wizard.next();
 	}),
 	((ctx) => {
@@ -47,17 +49,18 @@ const loadScene = new WizardScene('loadShowScene',
 			ctx.scene.leave();
 			return ctx.scene.enter('viewShowDetailScene');
 		}
-		if (ctx.message.text === '⬇️ Load more') {
+		if (ctx.message.text === ctx.session.i.t('navigation.load')) {
+			load = true;
 			ctx.scene.leave();
 			if (shows.length === 0) {
 				ctx.reply('No more shows!');
 				ctx.scene.leave();
-				return ctx.scene.enter('ShowScene');
+				return ctx.scene.enter('showScene');
 			}
 			return ctx.scene.reenter();
-		} if (ctx.message.text === '⬅️ Back') {
+		} if (ctx.message.text === ctx.session.i.t('navigation.back')) {
 			ctx.scene.leave();
-			return ctx.scene.enter('ShowScene');
+			return ctx.scene.enter('showScene');
 		}
 		ctx.scene.leave();
 		return ctx.scene.enter('mainScene');
@@ -65,22 +68,20 @@ const loadScene = new WizardScene('loadShowScene',
 
 const viewDetailScene = new WizardScene('viewShowDetailScene',
 	(async (ctx) => {
-		await ctx.reply('Details:', Markup.keyboard([
-			['⬅️ Back']
-		]).resize()
-			.extra());
+		if (!ctx.callbackQuery) {
+			ctx.scene.leave();
+			return ctx.scene.enter('mainScene');
+		}
 		const callbackData = ctx.callbackQuery.data.split('|');
 		const TMDBUrl = `https://api.themoviedb.org/3/tv/${callbackData[0]}?api_key=${process.env.API_Moviedb}&language=uk`;
 		const OMDBUrl = `http://www.omdbapi.com/?apikey=${process.env.OMDB_API}&t=${callbackData[1]}&type=series`;
-		const OMDBFilmDetails = await Show.getDetail(OMDBUrl);
-		const TMDBFilmDetails = await Show.getDetail(TMDBUrl);
+		const OMDBFilmDetails = await Functions.getDetail(OMDBUrl);
+		const TMDBFilmDetails = await Functions.getDetail(TMDBUrl);
 		Show.postDetail(TMDBFilmDetails, OMDBFilmDetails, ctx);
-		return ctx.wizard.next();
-	}),
-	(ctx) => {
+		load = false;
 		ctx.scene.leave();
-		return ctx.scene.enter('ShowScene');
-	});
+		return ctx.scene.enter('loadShowScene');
+	}));
 
 module.exports = Object.freeze({
 	mainScene,

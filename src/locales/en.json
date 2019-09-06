@@ -1,0 +1,47 @@
+{
+  "start": "Hey this is movie-geek bot",
+  "mainMenu": {
+    "text": "Main menu",
+    "films": "📽️ Films",
+    "news": "📰 News",
+    "shows": "📺 TV shows",
+    "settings": "⚙️ Settings",
+    "about": "❓ About us"
+  },
+  "films": {
+    "text": "Films menu",
+    "now": "🍿 Now in cinema",
+    "upcoming": "🗓️ Upcoming",
+    "originalName": "Original name",
+    "trailers": "🎞️ Film trailsers",
+    "genre": "Genres",
+    "runtime": "Runtime",
+    "min": "min",
+    "ratings": "⭐ Ratings"
+  },
+  "shows":{
+    "text": "Shows menu",
+    "now": "▶️ Now on TV",
+    "trandingToday": "🔥 Trending today",
+    "trandingWeek": "📈 Trending this week",
+    "nextEpisode": "Next episode №",
+    "release": "will release",
+    "originalName": "Original name",
+    "trailers": "🎞️ Show trailsers",
+    "runtime": "Runtime",
+    "genre": "Genre",
+    "seasonsNuber": "Number of seasons",
+    "ratings": "⭐ Ratings"
+  },
+  "navigation": {
+    "backToMain": "📋 Back to main menu",
+    "back": "⬅️ Back",
+    "load": "⬇️ Load more",
+    "more": "👀 See more",
+    "language": "Language settings"
+  },
+  "settings": {
+    "language": "Language:"
+  },
+  "about": "About TODO" 
+}

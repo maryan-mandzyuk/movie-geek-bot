@@ -1,52 +1,57 @@
 const WizardScene = require('telegraf/scenes/wizard');
-const Markup = require('telegraf/markup');
 const Film = require('../Films/functions');
+const Functions = require('../util/functions');
+const Keyboard = require('../util/keyboards');
 
 let films;
+let load = true;
 
 const mainScene = new WizardScene('filmScene',
 	((ctx) => {
-		ctx.reply('Films menu', Markup.keyboard([
-			['🍿 Now in cinema'],
-			['🗓️ Upcoming'],
-			['⬅️ Back']
-		]).extra());
+		Keyboard.filmKeyboard(ctx);
+		load = true;
 		return ctx.wizard.next();
 	}),
 	(async (ctx) => {
 		let url;
-		if (ctx.message.text === '⬅️ Back') {
+		if (!ctx.message) {
+			ctx.scene.leave();
+			return ctx.scene.enter('viewFilmDetailScene');
+		}
+		if (ctx.message.text === ctx.session.i.t('navigation.back')) {
 			ctx.scene.leave();
 			return ctx.scene.enter('mainScene');
 		}
-		if (ctx.message.text === '🍿 Now in cinema') {
+		if (ctx.message.text === ctx.session.i.t('films.now')) {
 			url = process.env.URL_FILMS_PN;
-		} else if (ctx.message.text === '🗓️ Upcoming') {
+		} else if (ctx.message.text === ctx.session.i.t('films.upcoming')) {
 			url = process.env.URL_FILMS_UPC;
 		}
-		films = await Film.getFilms(url);
+		films = await Functions.getData(url);
 		ctx.scene.leave();
 		return ctx.scene.enter('loadFilmScene');
 	}));
 
 const loadScene = new WizardScene('loadFilmScene',
 	(async (ctx) => {
-		await ctx.reply('Films', Markup.keyboard([
-			['⬇️ Load more'],
-			['⬅️ Back', '📋 To main menu'],
-		]).resize()
-			.extra());
-		const filmsToPost = films.slice(0, 3);
-		await Film.postFilms(filmsToPost, ctx);
-		films = films.slice(3);
+		await	Keyboard.navigationKeyboard(ctx);
+		if (load) {
+			const filmsToPost = films.slice(0, 3);
+			await Film.postFilms(filmsToPost, ctx);
+			films = films.slice(3);
+		}
 		return ctx.wizard.next();
 	}),
 	((ctx) => {
 		if (ctx.callbackQuery !== undefined) {
+			if (ctx.callbackQuery.data === 'share') {
+				ctx.forwardMessage('@Skeenny', ctx.callbackQuery.message.message_id);
+			}
 			ctx.scene.leave();
 			return ctx.scene.enter('viewFilmDetailScene');
 		}
-		if (ctx.message.text === '⬇️ Load more') {
+		if (ctx.message.text === ctx.session.i.t('navigation.load')) {
+			load = true;
 			ctx.scene.leave();
 			if (films.length === 0) {
 				ctx.reply('No more films!');
@@ -54,7 +59,7 @@ const loadScene = new WizardScene('loadFilmScene',
 				return ctx.scene.enter('filmScene');
 			}
 			return ctx.scene.reenter();
-		} if (ctx.message.text === '⬅️ Back') {
+		} if (ctx.message.text === ctx.session.i.t('navigation.back')) {
 			ctx.scene.leave();
 			return ctx.scene.enter('filmScene');
 		}
@@ -64,22 +69,20 @@ const loadScene = new WizardScene('loadFilmScene',
 
 const viewDetailScene = new WizardScene('viewFilmDetailScene',
 	(async (ctx) => {
-		await ctx.reply('Details:', Markup.keyboard([
-			['⬅️ Back']
-		]).resize()
-			.extra());
+		if (!ctx.callbackQuery) {
+			ctx.scene.leave();
+			return ctx.scene.enter('mainScene');
+		}
 		const callbackData = ctx.callbackQuery.data.split('|');
 		const TMDBUrl = `https://api.themoviedb.org/3/movie/${callbackData[0]}?api_key=${process.env.API_Moviedb}&language=uk`;
 		const OMDBUrl = `http://www.omdbapi.com/?apikey=${process.env.OMDB_API}&t=${callbackData[1]}&type=movie`;
-		const OMDBFilmDetails = await Film.getDetail(OMDBUrl);
-		const TMDBFilmDetails = await Film.getDetail(TMDBUrl);
+		const OMDBFilmDetails = await Functions.getDetail(OMDBUrl);
+		const TMDBFilmDetails = await Functions.getDetail(TMDBUrl);
 		Film.postDetail(TMDBFilmDetails, OMDBFilmDetails, ctx);
-		return ctx.wizard.next();
-	}),
-	(ctx) => {
+		load = false;
 		ctx.scene.leave();
-		return ctx.scene.enter('filmScene');
-	});
+		return ctx.scene.enter('loadFilmScene');
+	}));
 module.exports = Object.freeze({
 	mainScene,
 	loadScene,

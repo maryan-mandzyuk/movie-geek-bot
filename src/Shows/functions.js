@@ -1,37 +1,16 @@
-/* eslint-disable no-await-in-loop */
-const fetch = require('node-fetch');
 const Markup = require('telegraf/markup');
-
-const getShows = async (url) => {
-	const response = await fetch(url);
-	const json = await response.json();
-	const films = json.results;
-	return films;
-};
-
-const getDetail = async (url) => {
-	const response = await fetch(url);
-	const json = await response.json();
-	return json;
-};
-
-const getYoutubeVideo = async (search, maxResults) => {
-	const searchString = search.replace('&', 'and');
-	let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${searchString}&maxResults=${maxResults}&key=${process.env.YOUTUBE_API}`;
-	url = encodeURI(url);
-	const response = await fetch(url);
-	const json = await response.json();
-	return json.items;
-};
+const Functions = require('../util/functions');
 
 const postShows = async (array, ctx) => {
 	const shows = array.reverse();
 	for (const show of shows) {
-		const markup = Markup.inlineKeyboard([Markup.callbackButton('More', `${show.id}|${show.original_name}`)])
-			.resize()
-			.extra();
-		await ctx.replyWithPhoto(`https://image.tmdb.org/t/p/w500${show.poster_path}`);
-		await ctx.reply(`*${show.name}*`, { parse_mode: 'markdown', reply_markup: markup.reply_markup });
+		if (show.original_language !== 'ja') {
+			const markup = Markup.inlineKeyboard([Markup.callbackButton(ctx.session.i.t('navigation.more'), `${show.id}|${show.original_name}`)])
+				.resize()
+				.extra();
+			await ctx.replyWithPhoto(`https://image.tmdb.org/t/p/w500${show.poster_path}`);
+			await ctx.reply(`*${show.name}*`, { parse_mode: 'markdown', reply_markup: markup.reply_markup });
+		}
 	}
 };
 
@@ -44,40 +23,39 @@ const postDetail = async (TMDBShow, OMDBShow, ctx) => {
 	const numberOfSeasons = TMDBShow.number_of_seasons;
 	const ratings = OMDBShow.Ratings;
 	const runtime = OMDBShow.Runtime;
+	const trailersEn = await Functions.getYoutubeVideos(`${originalTitle} season ${numberOfSeasons} trailer`, 1);
+	const trailersUk = await Functions.getYoutubeVideos(`${name} сезон ${numberOfSeasons} трейлер`, 2);
+	let trailers = null;
+	if (trailersEn && trailersUk) {
+		trailers = trailersEn.concat(trailersUk);
+	}
+	const	trailersString = Functions.createTrailersString(trailers);
+
 	let ratingsString = '';
 	let nextEpisodeString = '';
-	const showTrailersEn = await getYoutubeVideo(`${originalTitle} trailer`, 1);
-	const showTrailersUk = await getYoutubeVideo(`${name} трейлер українською`, 3);
-	const showTrailers = showTrailersUk.concat(showTrailersEn);
-	const trailerList = showTrailers.map((item) => {
-		const trailerTitle = item.snippet.title.replace('[HD]', '');
-		return 	`[${trailerTitle}](https://www.youtube.com/watch?v=${item.id.videoId})\n`;
-	});
-	const trailerListString = trailerList.join('\n');
 
 	if (nextEpisodeToAir !== null) {
-		nextEpisodeString = `*Наступний епізод №${nextEpisodeToAir.episode_number} вийде:* ${nextEpisodeToAir.air_date}`;
+		nextEpisodeString = `*${ctx.session.i.t('shows.nextEpisode')}${nextEpisodeToAir.episode_number} ${ctx.session.i.t('shows.release')}:* ${nextEpisodeToAir.air_date}`;
 	}
 
-	ratings.forEach((element) => {
-		ratingsString += `${element.Source} ${element.Value} \n`;
-	});
+	if (ratings) {
+		ratings.forEach((element) => {
+			ratingsString += `${element.Source} ${element.Value} \n`;
+		});
+	}
 
 	ctx.reply(`*${name}* 
-		\nОригінальна назва: 
-		\n${originalTitle} 
-		\n${overview}\n*Трейлири фільму:* ${trailerListString}
-		\n*Тривалість серій:* ${runtime}
-		\n*Жанр:* ${genres.join(' ')} 
-		\n*Кількість сезонів:* ${numberOfSeasons}
-		\n*Оцінки:* 
+		\n${ctx.session.i.t('shows.originalName')}:\n${originalTitle}
+		\n${overview}
+		\n*${ctx.session.i.t('shows.trailers')}:*\n${trailersString}\n*${ctx.session.i.t('shows.runtime')}:* ${runtime}
+		\n*${ctx.session.i.t('shows.genre')}:* ${genres.join(' ')} 
+		\n*${ctx.session.i.t('shows.seasonsNuber')}:* ${numberOfSeasons}
+		\n*${ctx.session.i.t('shows.ratings')}:* 
 		\n${ratingsString}\n${nextEpisodeString}`,
 	{ parse_mode: 'markdown' });
 };
 
 module.exports = Object.freeze({
-	getShows,
 	postShows,
-	getDetail,
 	postDetail
 });
