@@ -9,6 +9,7 @@ const start = (stage) => {
 	stage.register(Main.languageScene);
 	stage.register(Main.settingsScene);
 	stage.register(Main.aboutScene);
+	stage.register(Main.loadScene);
 	stage.register(Show.loadScene);
 	stage.register(Show.viewDetailScene);
 	stage.register(Film.mainScene);

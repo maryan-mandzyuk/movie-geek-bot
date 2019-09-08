@@ -18,9 +18,16 @@ const showKeyboard = (ctx) => {
 };
 
 const navigationKeyboard = async (ctx) => {
-	await ctx.reply('Result', Markup.keyboard([
+	await ctx.reply(ctx.session.i.t('navigation.result'), Markup.keyboard([
 		[ctx.session.i.t('navigation.load')],
 		[ctx.session.i.t('navigation.back'), ctx.session.i.t('navigation.backToMain')]
+	]).resize()
+		.extra());
+};
+
+const newsNavKeyboard = async (ctx) => {
+	await ctx.reply(ctx.session.i.t('navigation.result'), Markup.keyboard([
+		[ctx.session.i.t('navigation.load'), ctx.session.i.t('navigation.back')]
 	]).resize()
 		.extra());
 };
@@ -53,5 +60,6 @@ module.exports = Object.freeze({
 	navigationKeyboard,
 	filmKeyboard,
 	backKeyboard,
-	settingsKeyboard
+	settingsKeyboard,
+	newsNavKeyboard
 });

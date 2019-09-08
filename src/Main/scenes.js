@@ -3,6 +3,8 @@ const Article = require('../News/functions');
 const Keyboard = require('../util/keyboards');
 const Function = require('../Main/functions');
 
+let articles;
+
 const scene = new WizardScene('mainScene',
 	(ctx) => {
 		Keyboard.mainKeyboard(ctx);
@@ -17,10 +19,9 @@ const scene = new WizardScene('mainScene',
 			return ctx.scene.enter('languageScene');
 		}
 		if (ctx.message.text === ctx.session.i.t('mainMenu.news')) {
-			const articles = await Article.getArticles();
-			Article.postArticles(ctx, articles);
-			Keyboard.backKeyboard(ctx);
-			return ctx.wizard.next();
+			articles = await Article.getArticles();
+			ctx.scene.leave();
+			return ctx.scene.enter('loadNewsScene');
 		}
 		if (ctx.message.text === ctx.session.i.t('mainMenu.films')) {
 			ctx.scene.leave();
@@ -42,6 +43,27 @@ const scene = new WizardScene('mainScene',
 	},
 	(ctx) => {
 		ctx.scene.leave();
+		return ctx.scene.enter('mainScene');
+	});
+
+const loadScene = new WizardScene('loadNewsScene',
+	async (ctx) => {
+		await Keyboard.newsNavKeyboard(ctx);
+		const articlesToPost = articles.slice(0, 3);
+		Article.postArticles(ctx, articlesToPost);
+		articles = articles.slice(3);
+		return ctx.wizard.next();
+	},
+	(ctx) => {
+		if (ctx.message.text === ctx.session.i.t('navigation.load')) {
+			ctx.scene.leave();
+			if (articles.length === 0) {
+				ctx.reply('No more news!');
+				ctx.scene.leave();
+				return ctx.scene.enter('mainScene');
+			}
+			return ctx.scene.reenter();
+		}
 		return ctx.scene.enter('mainScene');
 	});
 
@@ -94,5 +116,6 @@ module.exports = Object.freeze({
 	scene,
 	languageScene,
 	settingsScene,
-	aboutScene
+	aboutScene,
+	loadScene
 });

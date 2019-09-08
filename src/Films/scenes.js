@@ -44,9 +44,6 @@ const loadScene = new WizardScene('loadFilmScene',
 	}),
 	((ctx) => {
 		if (ctx.callbackQuery !== undefined) {
-			if (ctx.callbackQuery.data === 'share') {
-				ctx.forwardMessage('@Skeenny', ctx.callbackQuery.message.message_id);
-			}
 			ctx.scene.leave();
 			return ctx.scene.enter('viewFilmDetailScene');
 		}
